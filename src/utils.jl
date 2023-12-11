@@ -108,3 +108,26 @@ function get_number_of_bins(x::AbstractArray,; method::Symbol=:sqrt)
         @assert false "Method not implemented"
     end
 end
+
+
+"""
+    sort_if_unsorted(X::AbstractVector)
+
+Sort `X` if not already sorted and return the result.
+"""
+sort_if_unsorted(X) = issorted(X) ? X : sort(X)::typeof(X)
+
+
+"""
+    sorted_values_in_windows(values, windows::AbstractDict{<:Any,<:AbstractInterval{<:Real}})
+
+Return a `Dict` with the sorted elements of `values` that are in the given
+intervals.
+"""
+function sorted_values_in_windows(values, windows::AbstractDict{<:Any,<:AbstractInterval{<:Real}})
+    X  = sort_if_unsorted(values)
+    [
+        X[searchsortedfirst(X, leftendpoint(ival)):searchsortedlast(X, rightendpoint(ival))]
+        for (k, ival) in windows
+    ]
+end
