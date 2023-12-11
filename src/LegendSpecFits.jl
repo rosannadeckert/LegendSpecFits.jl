@@ -36,6 +36,7 @@ using Unitful
 using ValueShapes
 
 include("utils.jl")
+include("config.jl")
 include("peakshapes.jl")
 include("likelihoods.jl")
 include("priors.jl")
