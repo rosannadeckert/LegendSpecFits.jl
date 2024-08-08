@@ -108,7 +108,7 @@ end
 export fit_peaks
 
 function fit_peaks_th228(peakhists::Array, peakstats::StructArray, th228_lines::Vector{T},; e_unit::Union{Nothing, Unitful.EnergyUnits}=nothing, uncertainty::Bool=true, low_e_tail::Bool=true, iterative_fit::Bool=false,
-     fit_func::Symbol= :f_fit, pseudo_prior::NamedTupleDist=NamedTupleDist(empty = true)) where T<:Any
+     fit_func::Symbol= :f_fit, pseudo_prior::NamedTupleDist=NamedTupleDist(empty = true), niterations::Int = 500) where T<:Any
     # create return and result dicts
     result = Dict{T, NamedTuple}()
     report = Dict{T, NamedTuple}()
@@ -118,7 +118,7 @@ function fit_peaks_th228(peakhists::Array, peakstats::StructArray, th228_lines::
         h  = peakhists[i]
         ps = peakstats[i]
         # fit peak
-        result_peak, report_peak = fit_single_peak_th228(h, ps; uncertainty=uncertainty, low_e_tail=low_e_tail, fit_func = fit_func, pseudo_prior = pseudo_prior)
+        result_peak, report_peak = fit_single_peak_th228(h, ps; uncertainty=uncertainty, low_e_tail=low_e_tail, fit_func = fit_func, pseudo_prior = pseudo_prior, niterations = niterations)
 
         # check covariance matrix for being semi positive definite (no negative uncertainties)
         if uncertainty
@@ -152,7 +152,7 @@ Also, FWHM is calculated from the fitted peakshape with MC error propagation. Th
 """
 function fit_single_peak_th228(h::Histogram, ps::NamedTuple{(:peak_pos, :peak_fwhm, :peak_sigma, :peak_counts, :mean_background, :mean_background_step, :mean_background_std), NTuple{7, T}}; 
     uncertainty::Bool=true, low_e_tail::Bool=true, fixed_position::Bool=false, pseudo_prior::NamedTupleDist=NamedTupleDist(empty = true),
-    fit_func::Symbol=:f_fit, background_center::Real = ps.peak_pos) where T<:Real
+    fit_func::Symbol=:f_fit, background_center::Real = ps.peak_pos, niterations::Int = 500) where T<:Real
     # create standard pseudo priors
     pseudo_prior = get_pseudo_prior(h, ps, fit_func; pseudo_prior = pseudo_prior, fixed_position = fixed_position, low_e_tail = low_e_tail)
     
@@ -171,7 +171,7 @@ function fit_single_peak_th228(h::Histogram, ps::NamedTuple{(:peak_pos, :peak_fw
     end
 
     # MLE
-    opt_r = optimize((-) ∘ f_loglike ∘ inverse(f_trafo), v_init, Optim.Options(time_limit = 60, iterations = 500))
+    opt_r = optimize((-) ∘ f_loglike ∘ inverse(f_trafo), v_init, Optim.Options(time_limit = 60, iterations = niterations))
     converged = Optim.converged(opt_r)
 
     # best fit results
